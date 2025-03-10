@@ -77,9 +77,8 @@ const LearnerSubmissions = [
 ];
 
 function getLearnerData(course, ag, submissions) {
-  const learners = {}; // To store learner data
+  const learners = {};
 
-  // Helper function to check how many days a submission is late
   function getLateDays(submissionDate, dueDate) {
     const submitted = new Date(submissionDate);
     const due = new Date(dueDate);
@@ -88,15 +87,13 @@ function getLearnerData(course, ag, submissions) {
       : 0;
   }
 
-  // Process each submission
   submissions.forEach(({ learner_id, assignment_id, submission }) => {
     const assignment = ag.assignments.find((a) => a.id === assignment_id);
-    if (!assignment) return; // Ignore submissions not in the assignment group
+    if (!assignment) return;
 
     const { due_at, points_possible } = assignment;
     let score = submission.score;
 
-    // Apply late penalty (10% per day late)
     const lateDays = getLateDays(submission.submitted_at, due_at);
     if (lateDays > 0) {
       score = Math.max(0, score - points_possible * 0.1 * lateDays);
@@ -117,7 +114,6 @@ function getLearnerData(course, ag, submissions) {
     learners[learner_id].totalPossible += points_possible;
   });
 
-  // Convert learner data into an array with averages
   return Object.values(learners).map((learner) => ({
     id: learner.id,
     avg: learner.totalScore / learner.totalPossible,
