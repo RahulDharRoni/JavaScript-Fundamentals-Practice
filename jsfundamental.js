@@ -79,9 +79,13 @@ const LearnerSubmissions = [
 function getLearnerData(course, ag, submissions) {
   const learners = {}; // To store learner data
 
-  // Helper function to check if a submission is late
-  function isLate(submissionDate, dueDate) {
-    return new Date(submissionDate) > new Date(dueDate);
+  // Helper function to check how many days a submission is late
+  function getLateDays(submissionDate, dueDate) {
+    const submitted = new Date(submissionDate);
+    const due = new Date(dueDate);
+    return submitted > due
+      ? Math.ceil((submitted - due) / (1000 * 60 * 60 * 24))
+      : 0;
   }
 
   // Process each submission
@@ -92,9 +96,10 @@ function getLearnerData(course, ag, submissions) {
     const { due_at, points_possible } = assignment;
     let score = submission.score;
 
-    // Apply late penalty (assuming 10% per day, adjust as needed)
-    if (isLate(submission.submitted_at, due_at)) {
-      score = Math.max(0, score - points_possible * 0.1); // Deduct 10%
+    // Apply late penalty (10% per day late)
+    const lateDays = getLateDays(submission.submitted_at, due_at);
+    if (lateDays > 0) {
+      score = Math.max(0, score - points_possible * 0.1 * lateDays);
     }
 
     const percentage = score / points_possible;
@@ -118,12 +123,11 @@ function getLearnerData(course, ag, submissions) {
     avg: learner.totalScore / learner.totalPossible,
     ...Object.fromEntries(
       Object.entries(learner).filter(
-        ([key]) =>
-          key !== "id" && key !== "totalScore" && key !== "totalPossible"
+        ([key]) => !["id", "totalScore", "totalPossible"].includes(key)
       )
     ),
   }));
 }
 
 const result = getLearnerData(CourseInfo, AssignmentGroup, LearnerSubmissions);
-console.log(result); ////
+console.log(result);
